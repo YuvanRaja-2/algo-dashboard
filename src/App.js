@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API = 'http://localhost:8000';
+const API = 'https://hastily-smite-prefix.ngrok-free.dev';
 
 const styles = {
   app: { minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#fff', fontFamily: 'Inter, sans-serif' },
