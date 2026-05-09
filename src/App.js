@@ -165,7 +165,6 @@ function DashboardTab() {
       setAccount(acc);
       setSignals(sig);
       setPositions(pos);
-      setStatus(stat);
       setTradeLog(log);
       setLastUpdate(new Date());
       setLoading(false);
@@ -490,7 +489,6 @@ function ReportsTab() {
 // ============================================
 function Dashboard({ username, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [status, setStatus] = useState(null);
 
   useEffect(() => {
     fetch(`${API}/api/status`).then(r => r.json()).then(setStatus);
