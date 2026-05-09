@@ -148,7 +148,6 @@ function DashboardTab() {
   const [account, setAccount] = useState(null);
   const [signals, setSignals] = useState([]);
   const [positions, setPositions] = useState([]);
-  const [status, setStatus] = useState(null);
   const [tradeLog, setTradeLog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
@@ -491,9 +490,9 @@ function Dashboard({ username, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
-    fetch(`${API}/api/status`).then(r => r.json()).then(setStatus);
+    fetch(`${API}/api/status`).then(r => r.json()).then
     const interval = setInterval(() => {
-      fetch(`${API}/api/status`).then(r => r.json()).then(setStatus);
+      fetch(`${API}/api/status`).then(r => r.json()).then
     }, 30000);
     return () => clearInterval(interval);
   }, []);
