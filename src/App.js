@@ -33,7 +33,7 @@ const styles = {
   progressBg: { width: '100%', backgroundColor: '#1f2937', borderRadius: '999px', height: '6px', margin: '8px 0' },
   progressFill: (score) => ({ height: '6px', borderRadius: '999px', backgroundColor: score >= 70 ? '#10b981' : '#f59e0b', width: `${score}%` }),
   noTrades: { textAlign: 'center', color: '#9ca3af', padding: '24px' },
-  time: { fontSize: '12px', color: '#9ca3af' },
+  timeTxt: { fontSize: '12px', color: '#9ca3af' },
   loading: { textAlign: 'center', color: '#9ca3af', padding: '40px', fontSize: '18px' },
   logoutBtn: { backgroundColor: '#7f1d1d', color: '#f87171', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
   startBtn: { backgroundColor: '#064e3b', color: '#34d399', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', marginRight: '8px' },
@@ -45,9 +45,6 @@ const styles = {
   statusBadge: (color) => ({ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: color === 'green' ? '#064e3b' : '#7f1d1d', color: color === 'green' ? '#34d399' : '#f87171', padding: '6px 16px', borderRadius: '999px', fontSize: '12px', fontWeight: 'bold' }),
 };
 
-// ============================================
-// LOGIN
-// ============================================
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -100,9 +97,6 @@ function LoginPage({ onLogin }) {
   );
 }
 
-// ============================================
-// STAT CARD
-// ============================================
 function StatCard({ title, value, color }) {
   return (
     <div style={styles.card}>
@@ -112,9 +106,6 @@ function StatCard({ title, value, color }) {
   );
 }
 
-// ============================================
-// SIGNAL CARD
-// ============================================
 function SignalCard({ data }) {
   const isBullish = data.trend === 'BULLISH';
   const hasSignal = data.signal !== 'NO TRADE';
@@ -141,9 +132,6 @@ function SignalCard({ data }) {
   );
 }
 
-// ============================================
-// DASHBOARD TAB
-// ============================================
 function DashboardTab() {
   const [account, setAccount] = useState(null);
   const [signals, setSignals] = useState([]);
@@ -154,11 +142,10 @@ function DashboardTab() {
 
   const fetchAll = async () => {
     try {
-      const [acc, sig, pos, stat, log] = await Promise.all([
+      const [acc, sig, pos, log] = await Promise.all([
         fetch(`${API}/api/account`).then(r => r.json()),
         fetch(`${API}/api/signals`).then(r => r.json()),
         fetch(`${API}/api/positions`).then(r => r.json()),
-        fetch(`${API}/api/status`).then(r => r.json()),
         fetch(`${API}/api/tradelog`).then(r => r.json()),
       ]);
       setAccount(acc);
@@ -241,18 +228,15 @@ function DashboardTab() {
   );
 }
 
-// ============================================
-// CONTROL TAB
-// ============================================
 function ControlTab() {
   const [settings, setSettings] = useState(null);
   const [saved, setSaved] = useState(false);
-  const [botStatus, setBotStatus] = useState('RUNNING');
+  const [botRunning, setBotRunning] = useState(true);
 
   useEffect(() => {
     fetch(`${API}/api/settings`).then(r => r.json()).then(data => {
       setSettings(data);
-      setBotStatus(data.status);
+      setBotRunning(data.status === 'RUNNING');
     });
   }, []);
 
@@ -268,30 +252,26 @@ function ControlTab() {
 
   const handleStart = async () => {
     await fetch(`${API}/api/bot/start`, { method: 'POST' });
-    setBotStatus('RUNNING');
-    setSettings({ ...settings, status: 'RUNNING' });
+    setBotRunning(true);
   };
 
   const handleStop = async () => {
     await fetch(`${API}/api/bot/stop`, { method: 'POST' });
-    setBotStatus('STOPPED');
-    setSettings({ ...settings, status: 'STOPPED' });
+    setBotRunning(false);
   };
 
   if (!settings) return <div style={styles.loading}>Loading settings...</div>;
 
   return (
     <div style={styles.content}>
-
-      {/* Bot Control */}
       <div style={{ marginBottom: '32px' }}>
         <div style={styles.sectionTitle}>🤖 Bot Control</div>
         <div style={styles.card}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <div>
               <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Bot Status</div>
-              <div style={{ color: botStatus === 'RUNNING' ? '#34d399' : '#f87171', fontSize: '14px' }}>
-                {botStatus === 'RUNNING' ? '🟢 Running' : '🔴 Stopped'}
+              <div style={{ color: botRunning ? '#34d399' : '#f87171', fontSize: '14px' }}>
+                {botRunning ? '🟢 Running' : '🔴 Stopped'}
               </div>
             </div>
             <div>
@@ -301,8 +281,6 @@ function ControlTab() {
           </div>
         </div>
       </div>
-
-      {/* Risk Settings */}
       <div style={{ marginBottom: '32px' }}>
         <div style={styles.sectionTitle}>⚙️ Risk Settings</div>
         <div style={styles.card}>
@@ -329,8 +307,6 @@ function ControlTab() {
           {saved && <div style={styles.successMsg}>✅ Settings Saved!</div>}
         </div>
       </div>
-
-      {/* Pairs */}
       <div>
         <div style={styles.sectionTitle}>📊 Trading Pairs</div>
         <div style={styles.card}>
@@ -351,17 +327,12 @@ function ControlTab() {
             </div>
           ))}
           <button style={styles.saveBtn} onClick={handleSave}>💾 Save Pairs</button>
-          {saved && <div style={styles.successMsg}>✅ Saved!</div>}
         </div>
       </div>
-
     </div>
   );
 }
 
-// ============================================
-// REPORTS TAB
-// ============================================
 function ReportsTab() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -381,16 +352,12 @@ function ReportsTab() {
 
   return (
     <div style={styles.content}>
-
-      {/* Overview Stats */}
       <div style={styles.grid4}>
-        <StatCard title="📊 Total Trades" value={stats.total_trades} color="#60a5fa" />
+        <StatCard title="📊 Total Trades" value={stats.total_trades || 0} color="#60a5fa" />
         <StatCard title="✅ Win Rate" value={`${stats.win_rate || 0}%`} color="#34d399" />
         <StatCard title="💰 Total Profit" value={`$${stats.total_profit || 0}`} color={(stats.total_profit || 0) >= 0 ? "#34d399" : "#f87171"} />
         <StatCard title="📉 Max Drawdown" value={`${stats.max_drawdown || 0}%`} color="#f87171" />
       </div>
-
-      {/* Win/Loss Stats */}
       <div style={{ marginBottom: '32px' }}>
         <div style={styles.sectionTitle}>🏆 Win/Loss Breakdown</div>
         <div style={styles.grid2}>
@@ -408,17 +375,15 @@ function ReportsTab() {
           </div>
         </div>
       </div>
-
-      {/* Win Rate Bar */}
       <div style={{ marginBottom: '32px' }}>
         <div style={styles.sectionTitle}>🎯 Win Rate Progress</div>
         <div style={styles.card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
             <span style={styles.label}>Win Rate</span>
-            <span style={{ fontWeight: 'bold', color: stats.win_rate >= 50 ? '#34d399' : '#f87171' }}>{stats.win_rate}%</span>
+            <span style={{ fontWeight: 'bold', color: (stats.win_rate || 0) >= 50 ? '#34d399' : '#f87171' }}>{stats.win_rate || 0}%</span>
           </div>
           <div style={styles.progressBg}>
-            <div style={{ ...styles.progressFill(stats.win_rate), backgroundColor: stats.win_rate >= 50 ? '#10b981' : '#f59e0b' }} />
+            <div style={{ ...styles.progressFill(stats.win_rate || 0), backgroundColor: (stats.win_rate || 0) >= 50 ? '#10b981' : '#f59e0b' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
             <span style={{ fontSize: '12px', color: '#9ca3af' }}>0%</span>
@@ -427,79 +392,56 @@ function ReportsTab() {
           </div>
         </div>
       </div>
-
-      {/* Per Symbol Stats */}
       <div style={{ marginBottom: '32px' }}>
         <div style={styles.sectionTitle}>📊 Per Symbol Performance</div>
         <div style={styles.grid2}>
           {stats.by_symbol && Object.entries(stats.by_symbol).map(([symbol, data]) => (
             <div key={symbol} style={styles.card}>
               <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '12px' }}>{symbol}</div>
-              <div style={styles.row}>
-                <span style={styles.label}>Trades</span>
-                <span>{data.trades}</span>
-              </div>
-              <div style={styles.row}>
-                <span style={styles.label}>Wins</span>
-                <span style={{ color: '#34d399' }}>{data.wins}</span>
-              </div>
-              <div style={styles.row}>
-                <span style={styles.label}>Losses</span>
-                <span style={{ color: '#f87171' }}>{data.losses}</span>
-              </div>
-              <div style={styles.row}>
-                <span style={styles.label}>Win Rate</span>
-                <span style={{ color: data.win_rate >= 50 ? '#34d399' : '#f59e0b' }}>{data.win_rate}%</span>
-              </div>
-              <div style={styles.progressBg}>
-                <div style={styles.progressFill(data.win_rate)} />
-              </div>
+              <div style={styles.row}><span style={styles.label}>Trades</span><span>{data.trades}</span></div>
+              <div style={styles.row}><span style={styles.label}>Wins</span><span style={{ color: '#34d399' }}>{data.wins}</span></div>
+              <div style={styles.row}><span style={styles.label}>Losses</span><span style={{ color: '#f87171' }}>{data.losses}</span></div>
+              <div style={styles.row}><span style={styles.label}>Win Rate</span><span style={{ color: data.win_rate >= 50 ? '#34d399' : '#f59e0b' }}>{data.win_rate}%</span></div>
+              <div style={styles.progressBg}><div style={styles.progressFill(data.win_rate)} /></div>
             </div>
           ))}
         </div>
       </div>
-
-      {/* Recent Trades Full */}
       <div>
         <div style={styles.sectionTitle}>📝 All Trades</div>
         <div style={styles.card}>
-          {stats.trades && stats.trades.length === 0 ? (
+          {(!stats.trades || stats.trades.length === 0) ? (
             <div style={styles.noTrades}>No trades yet — Monday la trade varum! 🚀</div>
           ) : (
-            stats.trades && stats.trades.map((trade, i) => (
+            stats.trades.map((trade, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #1f2937', fontSize: '14px' }}>
                 <span style={{ color: '#9ca3af' }}>{trade.Date}</span>
                 <span style={{ fontWeight: 'bold' }}>{trade.Symbol}</span>
                 <span style={{ color: trade.Signal === 'BUY' ? '#34d399' : '#f87171' }}>{trade.Signal}</span>
                 <span style={{ color: '#60a5fa' }}>AI: {trade['AI Score']}%</span>
-                <span style={{ color: '#9ca3af' }}>{trade.Status}</span>
               </div>
             ))
           )}
         </div>
       </div>
-
     </div>
   );
 }
 
-// ============================================
-// MAIN DASHBOARD
-// ============================================
 function Dashboard({ username, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [botSession, setBotSession] = useState(null);
 
   useEffect(() => {
-    fetch(`${API}/api/status`).then(r => r.json()).then
+    fetch(`${API}/api/status`).then(r => r.json()).then(setBotSession);
     const interval = setInterval(() => {
-      fetch(`${API}/api/status`).then(r => r.json()).then
+      fetch(`${API}/api/status`).then(r => r.json()).then(setBotSession);
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div style={styles.app}>
-      {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={{ fontSize: '28px' }}>🤖</span>
@@ -513,15 +455,13 @@ function Dashboard({ username, onLogout }) {
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
             RUNNING
           </div>
-          <div style={styles.statusBadge(status?.session === 'ACTIVE' ? 'green' : 'red')}>
-            {status?.session === 'ACTIVE' ? '🟢 SESSION ACTIVE' : '🔴 SESSION CLOSED'}
+          <div style={styles.statusBadge(botSession && botSession.session === 'ACTIVE' ? 'green' : 'red')}>
+            {botSession && botSession.session === 'ACTIVE' ? '🟢 SESSION ACTIVE' : '🔴 SESSION CLOSED'}
           </div>
-          <div style={styles.time}>🕐 {new Date().toLocaleTimeString()}</div>
+          <div style={styles.timeTxt}>🕐 {new Date().toLocaleTimeString()}</div>
           <button style={styles.logoutBtn} onClick={onLogout}>🚪 Logout</button>
         </div>
       </div>
-
-      {/* Navigation */}
       <div style={styles.nav}>
         {[
           { id: 'dashboard', label: '📊 Dashboard' },
@@ -533,18 +473,13 @@ function Dashboard({ username, onLogout }) {
           </button>
         ))}
       </div>
-
-      {/* Content */}
-      {activeTab === 'dashboard' && <DashboardTab />}
-      {activeTab === 'control' && <ControlTab />}
-      {activeTab === 'reports' && <ReportsTab />}
+      {activeTab === 'dashboard' ? <DashboardTab /> : null}
+      {activeTab === 'control' ? <ControlTab /> : null}
+      {activeTab === 'reports' ? <ReportsTab /> : null}
     </div>
   );
 }
 
-// ============================================
-// APP
-// ============================================
 function App() {
   const [user, setUser] = useState(localStorage.getItem('username'));
   const handleLogin = (username) => setUser(username);
