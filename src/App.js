@@ -208,7 +208,7 @@ const [acc, sig, pos, log] = await Promise.all([
                 <span style={{ color: '#9ca3af' }}>{trade.Date} {trade.Time}</span>
                 <span style={{ fontWeight: 'bold' }}>{trade.Symbol}</span>
                 <span style={{ color: trade.Signal === 'BUY' ? '#34d399' : '#f87171' }}>{trade.Signal}</span>
-                <span style={{ color: '#60a5fa' }}>AI: {trade['AI Score']}%</span>
+                <span style={{ color: '#60a5fa' }}>AI: {trade['AI Score'] || 'N/A'}%</span>
               </div>
             ))
           }
@@ -235,7 +235,7 @@ function ControlTab() {
   const [botRunning, setBotRunning] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/api/settings`).then(r => r.json()).then(data => {
+    fetch(`${API}/api/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }, body: JSON.stringify(settings) })
       setSettings(data);
       setBotRunning(data.status === 'RUNNING');
     });
@@ -252,12 +252,12 @@ function ControlTab() {
   };
 
   const handleStart = async () => {
-    await fetch(`${API}/api/bot/start`, { method: 'POST' });
+    fetch(`${API}/api/bot/start`, { method: 'POST', headers: { 'ngrok-skip-browser-warning': 'true' } })
     setBotRunning(true);
   };
 
   const handleStop = async () => {
-    await fetch(`${API}/api/bot/stop`, { method: 'POST' });
+    fetch(`${API}/api/bot/stop`, { method: 'POST', headers: { 'ngrok-skip-browser-warning': 'true' } })
     setBotRunning(false);
   };
 
