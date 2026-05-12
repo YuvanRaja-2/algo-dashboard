@@ -1,50 +1,395 @@
 import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
 
 const API = 'https://hastily-smite-prefix.ngrok-free.dev';
+const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 
-const styles = {
-  app: { minHeight: '100vh', backgroundColor: '#0a0a0a', color: '#fff', fontFamily: 'Inter, sans-serif' },
-  loginPage: { minHeight: '100vh', backgroundColor: '#0a0a0a', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  loginCard: { backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '16px', padding: '40px', width: '400px' },
-  loginTitle: { fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '8px' },
-  loginSub: { fontSize: '14px', color: '#9ca3af', textAlign: 'center', marginBottom: '32px' },
-  inputGroup: { marginBottom: '16px' },
-  inputLabel: { fontSize: '14px', color: '#9ca3af', marginBottom: '8px', display: 'block' },
-  input: { width: '100%', backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', padding: '12px', color: '#fff', fontSize: '14px', outline: 'none', boxSizing: 'border-box' },
-  loginBtn: { width: '100%', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '12px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' },
-  errorMsg: { color: '#f87171', fontSize: '14px', textAlign: 'center', marginTop: '8px' },
-  header: { borderBottom: '1px solid #1f2937', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-  headerLeft: { display: 'flex', alignItems: 'center', gap: '12px' },
-  headerTitle: { fontSize: '20px', fontWeight: 'bold' },
-  headerSub: { fontSize: '12px', color: '#9ca3af' },
-  nav: { display: 'flex', gap: '8px', padding: '0 24px', borderBottom: '1px solid #1f2937', backgroundColor: '#0d1117' },
-  navBtn: (active) => ({ padding: '12px 20px', border: 'none', backgroundColor: 'transparent', color: active ? '#60a5fa' : '#9ca3af', borderBottom: active ? '2px solid #60a5fa' : '2px solid transparent', cursor: 'pointer', fontSize: '14px', fontWeight: active ? 'bold' : 'normal' }),
-  content: { maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' },
-  grid4: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' },
-  grid2: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '32px' },
-  card: { backgroundColor: '#111827', border: '1px solid #1f2937', borderRadius: '12px', padding: '20px' },
-  cardTitle: { fontSize: '12px', color: '#9ca3af', marginBottom: '8px' },
-  cardValue: { fontSize: '24px', fontWeight: 'bold' },
-  sectionTitle: { fontSize: '16px', fontWeight: 'bold', color: '#d1d5db', marginBottom: '16px' },
-  signalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' },
-  badge: (color) => ({ padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 'bold', backgroundColor: color === 'green' ? '#064e3b' : color === 'red' ? '#7f1d1d' : '#1f2937', color: color === 'green' ? '#34d399' : color === 'red' ? '#f87171' : '#9ca3af' }),
-  row: { display: 'flex', justifyContent: 'space-between', marginBottom: '8px' },
-  label: { fontSize: '14px', color: '#9ca3af' },
-  progressBg: { width: '100%', backgroundColor: '#1f2937', borderRadius: '999px', height: '6px', margin: '8px 0' },
-  progressFill: (score) => ({ height: '6px', borderRadius: '999px', backgroundColor: score >= 70 ? '#10b981' : '#f59e0b', width: `${score}%` }),
-  noTrades: { textAlign: 'center', color: '#9ca3af', padding: '24px' },
-  timeTxt: { fontSize: '12px', color: '#9ca3af' },
-  loading: { textAlign: 'center', color: '#9ca3af', padding: '40px', fontSize: '18px' },
-  logoutBtn: { backgroundColor: '#7f1d1d', color: '#f87171', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' },
-  startBtn: { backgroundColor: '#064e3b', color: '#34d399', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', marginRight: '8px' },
-  stopBtn: { backgroundColor: '#7f1d1d', color: '#f87171', border: 'none', borderRadius: '8px', padding: '10px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold' },
-  settingRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #1f2937' },
-  settingInput: { backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px', padding: '8px 12px', color: '#fff', fontSize: '14px', width: '120px', textAlign: 'right' },
-  saveBtn: { width: '100%', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', padding: '12px', fontSize: '14px', fontWeight: 'bold', cursor: 'pointer', marginTop: '16px' },
-  successMsg: { color: '#34d399', fontSize: '14px', textAlign: 'center', marginTop: '8px' },
-  statusBadge: (color) => ({ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: color === 'green' ? '#064e3b' : '#7f1d1d', color: color === 'green' ? '#34d399' : '#f87171', padding: '6px 16px', borderRadius: '999px', fontSize: '12px', fontWeight: 'bold' }),
+// ============================================
+// MOCK CHART DATA
+// ============================================
+const generateChartData = () => {
+  const data = [];
+  let price = 1.178;
+  for (let i = 0; i < 24; i++) {
+    price += (Math.random() - 0.5) * 0.002;
+    data.push({ time: `${i}:00`, price: parseFloat(price.toFixed(5)) });
+  }
+  return data;
 };
 
+// ============================================
+// STYLES
+// ============================================
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080c14;
+    --bg2: #0d1420;
+    --bg3: #111927;
+    --bg4: #162030;
+    --border: rgba(255,255,255,0.06);
+    --orange: #f97316;
+    --orange2: #fb923c;
+    --orange-glow: rgba(249,115,22,0.15);
+    --green: #22c55e;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --blue: #3b82f6;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .logo {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; padding: 0 8px; margin-bottom: 6px; letter-spacing: 1px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--orange-glow); color: var(--orange); border: 1px solid rgba(249,115,22,0.2); }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 16px 12px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #f97316, #fb923c);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: white;
+  }
+
+  .user-name { font-size: 13px; font-weight: 700; }
+  .user-role { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* MAIN */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title { font-size: 16px; font-weight: 800; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .status-green { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
+  .status-green .status-dot { background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: pulse 2s infinite; }
+  .status-red { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+  .status-red .status-dot { background: #ef4444; }
+  .status-orange { background: var(--orange-glow); color: var(--orange); border: 1px solid rgba(249,115,22,0.2); }
+  .status-orange .status-dot { background: var(--orange); }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .logout-btn {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.2s;
+  }
+  .logout-btn:hover { background: rgba(239,68,68,0.2); }
+
+  /* CONTENT */
+  .content { padding: 24px; flex: 1; }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .stat-card:hover { border-color: rgba(249,115,22,0.3); transform: translateY(-2px); }
+  .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--orange), transparent); opacity: 0; transition: opacity 0.2s; }
+  .stat-card:hover::before { opacity: 1; }
+
+  .stat-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 8px; letter-spacing: 0.5px; }
+  .stat-value { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+  .stat-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-orange { color: var(--orange); }
+  .text-blue { color: var(--blue); }
+  .text-purple { color: #a855f7; }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .card-body { padding: 20px; }
+
+  /* SIGNAL CARDS */
+  .signal-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+  .signal-card:hover { border-color: rgba(249,115,22,0.3); }
+  .signal-card:last-child { margin-bottom: 0; }
+
+  .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .signal-symbol { font-size: 15px; font-weight: 800; }
+  .signal-trend { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px; font-family: 'DM Mono', monospace; }
+  .trend-bull { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .trend-bear { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+  .signal-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .signal-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .signal-val { font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; }
+
+  .score-bar-bg { width: 100%; height: 4px; background: var(--bg4); border-radius: 999px; margin: 8px 0; }
+  .score-bar { height: 4px; border-radius: 999px; transition: width 0.5s; }
+
+  .signal-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px; font-family: 'DM Mono', monospace; }
+  .badge-buy { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .badge-sell { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .badge-wait { background: var(--bg4); color: var(--text3); }
+
+  .reasons { font-size: 10px; color: var(--text3); margin-top: 8px; font-family: 'DM Mono', monospace; line-height: 1.4; }
+
+  /* POSITIONS TABLE */
+  .table { width: 100%; }
+  .table-header { display: grid; grid-template-columns: 1fr 80px 80px 100px 100px 80px; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+  .table-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; letter-spacing: 0.5px; }
+  .table-row { display: grid; grid-template-columns: 1fr 80px 80px 100px 100px 80px; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  .table-row:hover { background: var(--bg3); }
+  .table-cell { font-size: 12px; font-family: 'DM Mono', monospace; display: flex; align-items: center; }
+  .table-symbol { font-weight: 700; font-size: 13px; font-family: 'Syne', sans-serif; }
+
+  /* TRADE LOG */
+  .trade-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  .trade-item:hover { background: var(--bg3); }
+  .trade-item:last-child { border-bottom: none; }
+  .trade-date { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .trade-symbol { font-size: 13px; font-weight: 700; }
+  .trade-type { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; font-family: 'DM Mono', monospace; }
+  .type-buy { background: rgba(34,197,94,0.1); color: var(--green); }
+  .type-sell { background: rgba(239,68,68,0.1); color: var(--red); }
+  .trade-score { font-size: 10px; color: var(--orange); font-family: 'DM Mono', monospace; }
+
+  /* SESSIONS */
+  .session-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .session-name { font-size: 13px; font-weight: 700; }
+  .session-time { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+
+  /* CONTROL */
+  .control-section { margin-bottom: 24px; }
+  .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .setting-label { font-size: 13px; color: var(--text2); }
+  .setting-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    color: var(--text);
+    font-size: 13px;
+    width: 120px;
+    text-align: right;
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .setting-input:focus { border-color: var(--orange); }
+
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: 'Syne', sans-serif; transition: all 0.2s; }
+  .btn-orange { background: var(--orange); color: white; }
+  .btn-orange:hover { background: var(--orange2); }
+  .btn-green { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .btn-green:hover { background: rgba(34,197,94,0.2); }
+  .btn-red { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); margin-left: 8px; }
+  .btn-red:hover { background: rgba(239,68,68,0.2); }
+  .btn-blue { background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); width: 100%; margin-top: 16px; }
+  .btn-blue:hover { background: rgba(59,130,246,0.2); }
+
+  .success-msg { color: var(--green); font-size: 12px; text-align: center; margin-top: 8px; font-family: 'DM Mono', monospace; }
+
+  /* REPORTS */
+  .report-stat { text-align: center; padding: 20px; }
+  .report-num { font-size: 40px; font-weight: 800; letter-spacing: -2px; }
+  .report-label { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 4px; }
+
+  .progress-bg { width: 100%; height: 6px; background: var(--bg4); border-radius: 999px; margin: 12px 0; }
+  .progress-fill { height: 6px; border-radius: 999px; transition: width 0.8s; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 32px; color: var(--text3); font-size: 13px; font-family: 'DM Mono', monospace; }
+
+  /* LOGIN */
+  .login-page { min-height: 100vh; background: var(--bg); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .login-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(249,115,22,0.15), transparent 70%); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+  .login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 400px; position: relative; z-index: 1; }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo-text { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #f97316, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .login-logo-sub { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 4px; }
+  .login-input-group { margin-bottom: 16px; }
+  .login-label { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+  .login-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box; font-family: 'Syne', sans-serif; }
+  .login-input:focus { border-color: var(--orange); }
+  .login-btn { width: 100%; background: linear-gradient(135deg, #f97316, #fb923c); color: white; border: none; border-radius: 10px; padding: 14px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 8px; font-family: 'Syne', sans-serif; transition: opacity 0.2s; letter-spacing: 0.5px; }
+  .login-btn:hover { opacity: 0.9; }
+  .login-error { color: var(--red); font-size: 12px; text-align: center; margin-top: 12px; font-family: 'DM Mono', monospace; }
+
+  .tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; font-family: 'DM Mono', monospace; }
+  .tag-orange { background: var(--orange-glow); color: var(--orange); border: 1px solid rgba(249,115,22,0.2); }
+
+  .update-time { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+  /* CHECKBOX */
+  .pair-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .pair-name { font-size: 13px; font-weight: 700; }
+  input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--orange); cursor: pointer; }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 60px; min-width: 60px; }
+    .logo-text, .logo-sub, .nav-item span, .user-name, .user-role { display: none; }
+    .main { margin-left: 60px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .table-header, .table-row { grid-template-columns: 1fr 60px 60px 80px; }
+    .table-cell:nth-child(5), .table-cell:nth-child(6) { display: none; }
+  }
+`;
+
+// ============================================
+// LOGIN
+// ============================================
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -57,7 +402,7 @@ function LoginPage({ onLogin }) {
     try {
       const res = await fetch(`${API}/api/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...HEADERS, 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       const data = await res.json();
@@ -69,95 +414,64 @@ function LoginPage({ onLogin }) {
         setError('Invalid credentials!');
       }
     } catch {
-      setError('Connection failed!');
+      setError('Connection failed! Backend running-a?');
     }
     setLoading(false);
   };
 
   return (
-    <div style={styles.loginPage}>
-      <div style={styles.loginCard}>
-        <div style={{ textAlign: 'center', fontSize: '48px', marginBottom: '16px' }}>🤖</div>
-        <div style={styles.loginTitle}>AI Algo Trading</div>
-        <div style={styles.loginSub}>Yuvan Raja Cholan — Login</div>
-        <div style={styles.inputGroup}>
-          <label style={styles.inputLabel}>Username</label>
-          <input style={styles.input} type="text" placeholder="Enter username" value={username} onChange={e => setUsername(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
+    <div className="login-page">
+      <style>{css}</style>
+      <div className="login-glow" />
+      <div className="login-card">
+        <div className="login-logo">
+          <div style={{ fontSize: 40, marginBottom: 8 }}>⚡</div>
+          <div className="login-logo-text">ALGOBOT</div>
+          <div className="login-logo-sub">AI POWERED TRADING SYSTEM</div>
         </div>
-        <div style={styles.inputGroup}>
-          <label style={styles.inputLabel}>Password</label>
-          <input style={styles.input} type="password" placeholder="Enter password" value={password} onChange={e => setPassword(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
+        <div className="login-input-group">
+          <label className="login-label">USERNAME</label>
+          <input className="login-input" type="text" placeholder="Enter username" value={username} onChange={e => setUsername(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
         </div>
-        <button style={styles.loginBtn} onClick={handleLogin} disabled={loading}>
-          {loading ? '🔄 Logging in...' : '🚀 Login'}
+        <div className="login-input-group">
+          <label className="login-label">PASSWORD</label>
+          <input className="login-input" type="password" placeholder="Enter password" value={password} onChange={e => setPassword(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
+        </div>
+        <button className="login-btn" onClick={handleLogin} disabled={loading}>
+          {loading ? 'AUTHENTICATING...' : '⚡ LAUNCH DASHBOARD'}
         </button>
-        {error && <div style={styles.errorMsg}>❌ {error}</div>}
+        {error && <div className="login-error">⚠️ {error}</div>}
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value, color }) {
-  return (
-    <div style={styles.card}>
-      <div style={styles.cardTitle}>{title}</div>
-      <div style={{ ...styles.cardValue, color }}>{value}</div>
-    </div>
-  );
-}
-
-function SignalCard({ data }) {
-  const isBullish = data.trend === 'BULLISH';
-  const hasSignal = data.signal !== 'NO TRADE';
-  return (
-    <div style={styles.card}>
-      <div style={styles.signalHeader}>
-        <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{data.symbol}</span>
-        <span style={styles.badge(isBullish ? 'green' : 'red')}>{data.trend}</span>
-      </div>
-      <div style={styles.row}><span style={styles.label}>Price</span><span style={{ fontFamily: 'monospace' }}>{data.price}</span></div>
-      <div style={styles.row}>
-        <span style={styles.label}>AI Score</span>
-        <span style={{ fontWeight: 'bold', color: data.score >= 70 ? '#10b981' : '#f59e0b' }}>{data.score}%</span>
-      </div>
-      <div style={styles.progressBg}><div style={styles.progressFill(data.score)} /></div>
-      <div style={styles.row}><span style={styles.label}>Order Blocks</span><span style={{ color: '#60a5fa' }}>{data.orderBlocks} detected</span></div>
-      <div style={styles.row}><span style={styles.label}>FVGs</span><span style={{ color: '#a78bfa' }}>{data.fvgs} detected</span></div>
-      <div style={styles.row}>
-        <span style={styles.label}>Signal</span>
-        <span style={styles.badge(hasSignal ? (data.signal.includes('BUY') ? 'green' : 'red') : 'gray')}>{data.signal}</span>
-      </div>
-      {data.reasons.length > 0 && <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280' }}>💡 {data.reasons.join(', ')}</div>}
-    </div>
-  );
-}
-
+// ============================================
+// DASHBOARD TAB
+// ============================================
 function DashboardTab() {
   const [account, setAccount] = useState(null);
   const [signals, setSignals] = useState([]);
   const [positions, setPositions] = useState([]);
   const [tradeLog, setTradeLog] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [chartData] = useState(generateChartData());
 
   const fetchAll = async () => {
     try {
-     const headers = { 'ngrok-skip-browser-warning': 'true' };
-const [acc, sig, pos, log] = await Promise.all([
-  fetch(`${API}/api/account`, { headers }).then(r => r.json()),
-  fetch(`${API}/api/signals`, { headers }).then(r => r.json()),
-  fetch(`${API}/api/positions`, { headers }).then(r => r.json()),
-  fetch(`${API}/api/tradelog`, { headers }).then(r => r.json()),
-]);
+      const [acc, sig, pos, log] = await Promise.all([
+        fetch(`${API}/api/account`, { headers: HEADERS }).then(r => r.json()),
+        fetch(`${API}/api/signals`, { headers: HEADERS }).then(r => r.json()),
+        fetch(`${API}/api/positions`, { headers: HEADERS }).then(r => r.json()),
+        fetch(`${API}/api/tradelog`, { headers: HEADERS }).then(r => r.json()),
+      ]);
       setAccount(acc);
       setSignals(sig);
       setPositions(pos);
       setTradeLog(log);
       setLastUpdate(new Date());
-      setLoading(false);
     } catch (err) {
       console.error(err);
-      setLoading(false);
     }
   };
 
@@ -167,328 +481,485 @@ const [acc, sig, pos, log] = await Promise.all([
     return () => clearInterval(interval);
   }, []);
 
-  if (loading) return <div style={styles.loading}>🤖 Loading...</div>;
-
   return (
-    <div style={styles.content}>
+    <div className="content">
+
+      {/* STATS */}
       {account && (
-        <div style={styles.grid4}>
-          <StatCard title="💰 Balance" value={`$${account.balance.toFixed(2)}`} color="#60a5fa" />
-          <StatCard title="📈 Equity" value={`$${account.equity.toFixed(2)}`} color="#a78bfa" />
-          <StatCard title="💹 Profit/Loss" value={`$${account.profit.toFixed(2)}`} color={account.profit >= 0 ? "#34d399" : "#f87171"} />
-          <StatCard title="✅ Free Margin" value={`$${account.freeMargin.toFixed(2)}`} color="#fbbf24" />
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-label">BALANCE</div>
+            <div className="stat-value text-blue">${account.balance.toFixed(2)}</div>
+            <div className="stat-sub">Total Capital</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">EQUITY</div>
+            <div className="stat-value text-purple">${account.equity.toFixed(2)}</div>
+            <div className="stat-sub">Current Value</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">PROFIT / LOSS</div>
+            <div className={`stat-value ${account.profit >= 0 ? 'text-green' : 'text-red'}`}>${account.profit.toFixed(2)}</div>
+            <div className="stat-sub">Floating P&L</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">FREE MARGIN</div>
+            <div className="stat-value text-orange">${account.freeMargin.toFixed(2)}</div>
+            <div className="stat-sub">Available</div>
+          </div>
         </div>
       )}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>🤖 AI Signals — Live <span style={{ fontSize: '12px', color: '#6b7280' }}>Updated: {lastUpdate.toLocaleTimeString()}</span></div>
-        <div style={styles.grid2}>{signals.map(s => <SignalCard key={s.symbol} data={s} />)}</div>
-      </div>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>📈 Open Positions ({positions.length})</div>
-        <div style={styles.card}>
-          {positions.length === 0 ? <div style={styles.noTrades}>No open trades</div> :
-            positions.map(pos => (
-              <div key={pos.ticket} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #1f2937' }}>
-                <span style={{ fontWeight: 'bold' }}>{pos.symbol}</span>
-                <span style={{ color: pos.type === 'BUY' ? '#34d399' : '#f87171' }}>{pos.type}</span>
-                <span style={{ color: '#9ca3af' }}>Lot: {pos.lot}</span>
-                <span style={{ color: '#9ca3af' }}>Entry: {pos.entry}</span>
-                <span style={{ color: pos.profit >= 0 ? '#34d399' : '#f87171', fontWeight: 'bold' }}>${pos.profit}</span>
-              </div>
-            ))
-          }
+
+      {/* CHART + SIGNALS */}
+      <div className="grid-3">
+
+        {/* CHART */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">📈 EURUSD — Live Price</div>
+            <span className="tag tag-orange">M15</span>
+          </div>
+          <div className="card-body" style={{ padding: '16px 8px' }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="priceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="time" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={60} domain={['auto', 'auto']} />
+                <Tooltip contentStyle={{ background: '#0d1420', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, fontSize: 11 }} />
+                <Area type="monotone" dataKey="price" stroke="#f97316" strokeWidth={2} fill="url(#priceGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* AI SIGNALS */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">🤖 AI Signals</div>
+            <span className="update-time">{lastUpdate.toLocaleTimeString()}</span>
+          </div>
+          <div className="card-body" style={{ padding: '12px' }}>
+            {signals.length === 0 ? (
+              <div className="empty">Loading signals...</div>
+            ) : (
+              signals.map(s => (
+                <div className="signal-card" key={s.symbol}>
+                  <div className="signal-header">
+                    <span className="signal-symbol">{s.symbol}</span>
+                    <span className={`signal-trend ${s.trend === 'BULLISH' ? 'trend-bull' : 'trend-bear'}`}>{s.trend}</span>
+                  </div>
+                  <div className="signal-row">
+                    <span className="signal-label">PRICE</span>
+                    <span className="signal-val">{s.price}</span>
+                  </div>
+                  <div className="signal-row">
+                    <span className="signal-label">AI SCORE</span>
+                    <span className={`signal-val ${s.score >= 70 ? 'text-green' : s.score >= 50 ? 'text-orange' : 'text-red'}`}>{s.score}%</span>
+                  </div>
+                  <div className="score-bar-bg">
+                    <div className="score-bar" style={{ width: `${s.score}%`, background: s.score >= 70 ? '#22c55e' : s.score >= 50 ? '#f97316' : '#ef4444' }} />
+                  </div>
+                  <div className="signal-row">
+                    <span className="signal-label">SIGNAL</span>
+                    <span className={`signal-badge ${s.signal.includes('BUY') ? 'badge-buy' : s.signal.includes('SELL') ? 'badge-sell' : 'badge-wait'}`}>{s.signal}</span>
+                  </div>
+                  {s.reasons.length > 0 && <div className="reasons">💡 {s.reasons.join(' · ')}</div>}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>📝 Recent Trades</div>
-        <div style={styles.card}>
-          {tradeLog.length === 0 ? <div style={styles.noTrades}>No trades logged yet</div> :
-            tradeLog.map((trade, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #1f2937', fontSize: '14px' }}>
-                <span style={{ color: '#9ca3af' }}>{trade.Date} {trade.Time}</span>
-                <span style={{ fontWeight: 'bold' }}>{trade.Symbol}</span>
-                <span style={{ color: trade.Signal === 'BUY' ? '#34d399' : '#f87171' }}>{trade.Signal}</span>
-                <span style={{ color: '#60a5fa' }}>AI: {trade['AI Score'] || 'N/A'}%</span>
+
+      {/* POSITIONS + TRADES */}
+      <div className="grid-2">
+
+        {/* OPEN POSITIONS */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">📊 Open Positions <span className="tag tag-orange" style={{ marginLeft: 8 }}>{positions.length}</span></div>
+          </div>
+          {positions.length === 0 ? (
+            <div className="empty">No open positions</div>
+          ) : (
+            <div>
+              <div className="table-header">
+                <span className="table-label">SYMBOL</span>
+                <span className="table-label">TYPE</span>
+                <span className="table-label">LOT</span>
+                <span className="table-label">ENTRY</span>
+                <span className="table-label">CURRENT</span>
+                <span className="table-label">P&L</span>
               </div>
-            ))
-          }
-        </div>
-      </div>
-      <div>
-        <div style={styles.sectionTitle}>⏰ Trading Sessions</div>
-        <div style={styles.grid2}>
-          {[{ name: '🇬🇧 London', hours: '8AM-4PM UTC' }, { name: '🇺🇸 New York', hours: '1PM-9PM UTC' }].map(s => (
-            <div key={s.name} style={styles.card}>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{s.name}</div>
-              <div style={{ color: '#9ca3af', fontSize: '14px' }}>{s.hours}</div>
+              {positions.map(pos => (
+                <div className="table-row" key={pos.ticket}>
+                  <div className="table-cell table-symbol">{pos.symbol}</div>
+                  <div className={`table-cell ${pos.type === 'BUY' ? 'text-green' : 'text-red'}`}>{pos.type}</div>
+                  <div className="table-cell">{pos.lot}</div>
+                  <div className="table-cell">{pos.entry}</div>
+                  <div className="table-cell">{pos.current}</div>
+                  <div className={`table-cell ${pos.profit >= 0 ? 'text-green' : 'text-red'}`}>${pos.profit}</div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+        </div>
+
+        {/* RECENT TRADES */}
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">📝 Recent Trades</div>
+          </div>
+          {tradeLog.length === 0 ? (
+            <div className="empty">No trades logged yet</div>
+          ) : (
+            tradeLog.slice(0, 8).map((trade, i) => (
+              <div className="trade-item" key={i}>
+                <div>
+                  <div className="trade-symbol">{trade.Symbol}</div>
+                  <div className="trade-date">{trade.Date} {trade.Time}</div>
+                </div>
+                <span className={`trade-type ${trade.Signal === 'BUY' ? 'type-buy' : 'type-sell'}`}>{trade.Signal}</span>
+                <span className="trade-score">AI: {trade['AI Score'] || 'N/A'}%</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
+
+      {/* SESSIONS */}
+      <div className="card">
+        <div className="card-header">
+          <div className="card-title">⏰ Trading Sessions</div>
+        </div>
+        <div className="card-body">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            {[
+              { flag: '🇬🇧', name: 'London Session', time: '8:00 AM – 4:00 PM UTC', active: new Date().getUTCHours() >= 8 && new Date().getUTCHours() < 16 },
+              { flag: '🇺🇸', name: 'New York Session', time: '1:00 PM – 9:00 PM UTC', active: new Date().getUTCHours() >= 13 && new Date().getUTCHours() < 21 },
+            ].map(s => (
+              <div className="session-card" key={s.name}>
+                <div>
+                  <div className="session-name">{s.flag} {s.name}</div>
+                  <div className="session-time">{s.time}</div>
+                </div>
+                <span className={`status-pill ${s.active ? 'status-green' : 'status-red'}`}>
+                  <span className="status-dot" />
+                  {s.active ? 'ACTIVE' : 'CLOSED'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
 
+// ============================================
+// CONTROL TAB
+// ============================================
 function ControlTab() {
   const [settings, setSettings] = useState(null);
   const [saved, setSaved] = useState(false);
   const [botRunning, setBotRunning] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/api/settings`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' }, body: JSON.stringify(settings) })
-      setSettings(data);
-      setBotRunning(data.status === 'RUNNING');
-    });
+    fetch(`${API}/api/settings`, { headers: HEADERS })
+      .then(r => r.json())
+      .then(data => { setSettings(data); setBotRunning(data.status === 'RUNNING'); });
   }, []);
 
   const handleSave = async () => {
-    await fetch(`${API}/api/settings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
-    });
+    await fetch(`${API}/api/settings`, { method: 'POST', headers: { ...HEADERS, 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
   const handleStart = async () => {
-    fetch(`${API}/api/bot/start`, { method: 'POST', headers: { 'ngrok-skip-browser-warning': 'true' } })
+    await fetch(`${API}/api/bot/start`, { method: 'POST', headers: HEADERS });
     setBotRunning(true);
   };
 
   const handleStop = async () => {
-    fetch(`${API}/api/bot/stop`, { method: 'POST', headers: { 'ngrok-skip-browser-warning': 'true' } })
+    await fetch(`${API}/api/bot/stop`, { method: 'POST', headers: HEADERS });
     setBotRunning(false);
   };
 
-  if (!settings) return <div style={styles.loading}>Loading settings...</div>;
+  if (!settings) return <div className="content"><div className="empty">Loading settings...</div></div>;
 
   return (
-    <div style={styles.content}>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>🤖 Bot Control</div>
-        <div style={styles.card}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <div>
-              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>Bot Status</div>
-              <div style={{ color: botRunning ? '#34d399' : '#f87171', fontSize: '14px' }}>
-                {botRunning ? '🟢 Running' : '🔴 Stopped'}
-              </div>
-            </div>
-            <div>
-              <button style={styles.startBtn} onClick={handleStart}>▶️ Start Bot</button>
-              <button style={styles.stopBtn} onClick={handleStop}>⏹️ Stop Bot</button>
-            </div>
+    <div className="content">
+
+      {/* BOT CONTROL */}
+      <div className="control-section">
+        <div className="card">
+          <div className="card-header">
+            <div className="card-title">🤖 Bot Control</div>
+            <span className={`status-pill ${botRunning ? 'status-green' : 'status-red'}`}>
+              <span className="status-dot" />
+              {botRunning ? 'RUNNING' : 'STOPPED'}
+            </span>
+          </div>
+          <div className="card-body" style={{ display: 'flex', gap: 12 }}>
+            <button className="btn btn-green" onClick={handleStart}>▶ START BOT</button>
+            <button className="btn btn-red" onClick={handleStop}>⏹ STOP BOT</button>
           </div>
         </div>
       </div>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>⚙️ Risk Settings</div>
-        <div style={styles.card}>
-          {[
-            { label: '💰 Risk Per Trade (%)', key: 'risk_percent', step: 0.1 },
-            { label: '🛡️ Stop Loss (pips)', key: 'sl_pips', step: 1 },
-            { label: '🎯 Take Profit (pips)', key: 'tp_pips', step: 1 },
-            { label: '📊 Max Trades', key: 'max_trades', step: 1 },
-            { label: '📉 Max Daily Loss (%)', key: 'max_daily_loss', step: 0.1 },
-            { label: '🤖 AI Score Threshold (%)', key: 'ai_threshold', step: 1 },
-          ].map(item => (
-            <div key={item.key} style={styles.settingRow}>
-              <span style={styles.label}>{item.label}</span>
-              <input
-                style={styles.settingInput}
-                type="number"
-                step={item.step}
-                value={settings[item.key]}
-                onChange={e => setSettings({ ...settings, [item.key]: parseFloat(e.target.value) })}
-              />
-            </div>
-          ))}
-          <button style={styles.saveBtn} onClick={handleSave}>💾 Save Settings</button>
-          {saved && <div style={styles.successMsg}>✅ Settings Saved!</div>}
+
+      <div className="grid-2">
+
+        {/* RISK SETTINGS */}
+        <div className="card">
+          <div className="card-header"><div className="card-title">⚙️ Risk Settings</div></div>
+          <div className="card-body">
+            {[
+              { label: 'Risk Per Trade (%)', key: 'risk_percent', step: 0.1 },
+              { label: 'Stop Loss (pips)', key: 'sl_pips', step: 1 },
+              { label: 'Take Profit (pips)', key: 'tp_pips', step: 1 },
+              { label: 'Max Trades', key: 'max_trades', step: 1 },
+              { label: 'Max Daily Loss (%)', key: 'max_daily_loss', step: 0.1 },
+              { label: 'AI Score Threshold (%)', key: 'ai_threshold', step: 1 },
+            ].map(item => (
+              <div className="setting-row" key={item.key}>
+                <span className="setting-label">{item.label}</span>
+                <input className="setting-input" type="number" step={item.step} value={settings[item.key]} onChange={e => setSettings({ ...settings, [item.key]: parseFloat(e.target.value) })} />
+              </div>
+            ))}
+            <button className="btn btn-blue" onClick={handleSave}>💾 SAVE SETTINGS</button>
+            {saved && <div className="success-msg">✅ Settings saved!</div>}
+          </div>
         </div>
-      </div>
-      <div>
-        <div style={styles.sectionTitle}>📊 Trading Pairs</div>
-        <div style={styles.card}>
-          {['EURUSD', 'GBPUSD', 'USDJPY'].map(pair => (
-            <div key={pair} style={styles.settingRow}>
-              <span style={styles.label}>{pair}</span>
-              <input
-                type="checkbox"
-                checked={settings.symbols ? settings.symbols.includes(pair) : false}
-                onChange={e => {
-                  const syms = e.target.checked
-                    ? [...settings.symbols, pair]
-                    : settings.symbols.filter(s => s !== pair);
-                  setSettings({ ...settings, symbols: syms });
-                }}
-                style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-              />
-            </div>
-          ))}
-          <button style={styles.saveBtn} onClick={handleSave}>💾 Save Pairs</button>
+
+        {/* TRADING PAIRS */}
+        <div className="card">
+          <div className="card-header"><div className="card-title">📊 Trading Pairs</div></div>
+          <div className="card-body">
+            {['EURUSD', 'GBPUSD', 'USDJPY'].map(pair => (
+              <div className="pair-row" key={pair}>
+                <span className="pair-name">{pair}</span>
+                <input type="checkbox" checked={settings.symbols ? settings.symbols.includes(pair) : false} onChange={e => { const syms = e.target.checked ? [...settings.symbols, pair] : settings.symbols.filter(s => s !== pair); setSettings({ ...settings, symbols: syms }); }} />
+              </div>
+            ))}
+            <button className="btn btn-blue" onClick={handleSave}>💾 SAVE PAIRS</button>
+          </div>
         </div>
+
       </div>
     </div>
   );
 }
 
+// ============================================
+// REPORTS TAB
+// ============================================
 function ReportsTab() {
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API}/api/reports`)
+    fetch(`${API}/api/reports`, { headers: HEADERS })
       .then(r => r.json())
-      .then(data => {
-        setStats(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      .then(setStats)
+      .catch(() => {});
   }, []);
 
-  if (loading) return <div style={styles.loading}>📊 Loading Reports...</div>;
-  if (!stats) return <div style={styles.loading}>No data yet!</div>;
+  if (!stats) return <div className="content"><div className="empty">Loading reports...</div></div>;
 
   return (
-    <div style={styles.content}>
-      <div style={styles.grid4}>
-        <StatCard title="📊 Total Trades" value={stats.total_trades || 0} color="#60a5fa" />
-        <StatCard title="✅ Win Rate" value={`${stats.win_rate || 0}%`} color="#34d399" />
-        <StatCard title="💰 Total Profit" value={`$${stats.total_profit || 0}`} color={(stats.total_profit || 0) >= 0 ? "#34d399" : "#f87171"} />
-        <StatCard title="📉 Max Drawdown" value={`${stats.max_drawdown || 0}%`} color="#f87171" />
-      </div>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>🏆 Win/Loss Breakdown</div>
-        <div style={styles.grid2}>
-          <div style={styles.card}>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#34d399' }}>{stats.wins || 0}</div>
-              <div style={{ color: '#9ca3af', marginTop: '8px' }}>✅ Winning Trades</div>
-            </div>
-          </div>
-          <div style={styles.card}>
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#f87171' }}>{stats.losses || 0}</div>
-              <div style={{ color: '#9ca3af', marginTop: '8px' }}>❌ Losing Trades</div>
-            </div>
-          </div>
+    <div className="content">
+
+      {/* OVERVIEW */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-label">TOTAL TRADES</div>
+          <div className="stat-value text-blue">{stats.total_trades || 0}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">WIN RATE</div>
+          <div className={`stat-value ${(stats.win_rate || 0) >= 50 ? 'text-green' : 'text-red'}`}>{stats.win_rate || 0}%</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">TOTAL PROFIT</div>
+          <div className={`stat-value ${(stats.total_profit || 0) >= 0 ? 'text-green' : 'text-red'}`}>${stats.total_profit || 0}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">MAX DRAWDOWN</div>
+          <div className="stat-value text-red">{stats.max_drawdown || 0}%</div>
         </div>
       </div>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>🎯 Win Rate Progress</div>
-        <div style={styles.card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={styles.label}>Win Rate</span>
-            <span style={{ fontWeight: 'bold', color: (stats.win_rate || 0) >= 50 ? '#34d399' : '#f87171' }}>{stats.win_rate || 0}%</span>
-          </div>
-          <div style={styles.progressBg}>
-            <div style={{ ...styles.progressFill(stats.win_rate || 0), backgroundColor: (stats.win_rate || 0) >= 50 ? '#10b981' : '#f59e0b' }} />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-            <span style={{ fontSize: '12px', color: '#9ca3af' }}>0%</span>
-            <span style={{ fontSize: '12px', color: '#34d399' }}>Target: 55%+</span>
-            <span style={{ fontSize: '12px', color: '#9ca3af' }}>100%</span>
-          </div>
-        </div>
-      </div>
-      <div style={{ marginBottom: '32px' }}>
-        <div style={styles.sectionTitle}>📊 Per Symbol Performance</div>
-        <div style={styles.grid2}>
-          {stats.by_symbol && Object.entries(stats.by_symbol).map(([symbol, data]) => (
-            <div key={symbol} style={styles.card}>
-              <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '12px' }}>{symbol}</div>
-              <div style={styles.row}><span style={styles.label}>Trades</span><span>{data.trades}</span></div>
-              <div style={styles.row}><span style={styles.label}>Wins</span><span style={{ color: '#34d399' }}>{data.wins}</span></div>
-              <div style={styles.row}><span style={styles.label}>Losses</span><span style={{ color: '#f87171' }}>{data.losses}</span></div>
-              <div style={styles.row}><span style={styles.label}>Win Rate</span><span style={{ color: data.win_rate >= 50 ? '#34d399' : '#f59e0b' }}>{data.win_rate}%</span></div>
-              <div style={styles.progressBg}><div style={styles.progressFill(data.win_rate)} /></div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div>
-        <div style={styles.sectionTitle}>📝 All Trades</div>
-        <div style={styles.card}>
-          {(!stats.trades || stats.trades.length === 0) ? (
-            <div style={styles.noTrades}>No trades yet — Monday la trade varum! 🚀</div>
-          ) : (
-            stats.trades.map((trade, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #1f2937', fontSize: '14px' }}>
-                <span style={{ color: '#9ca3af' }}>{trade.Date}</span>
-                <span style={{ fontWeight: 'bold' }}>{trade.Symbol}</span>
-                <span style={{ color: trade.Signal === 'BUY' ? '#34d399' : '#f87171' }}>{trade.Signal}</span>
-                <span style={{ color: '#60a5fa' }}>AI: {trade['AI Score']}%</span>
+
+      <div className="grid-2">
+
+        {/* WIN/LOSS */}
+        <div className="card">
+          <div className="card-header"><div className="card-title">🏆 Win / Loss</div></div>
+          <div className="card-body">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div className="report-stat">
+                <div className="report-num text-green">{stats.wins || 0}</div>
+                <div className="report-label">WINS</div>
               </div>
-            ))
-          )}
+              <div className="report-stat">
+                <div className="report-num text-red">{stats.losses || 0}</div>
+                <div className="report-label">LOSSES</div>
+              </div>
+            </div>
+            <div className="progress-bg">
+              <div className="progress-fill" style={{ width: `${stats.win_rate || 0}%`, background: (stats.win_rate || 0) >= 50 ? '#22c55e' : '#f97316' }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text3)', fontFamily: 'DM Mono, monospace' }}>
+              <span>0%</span>
+              <span style={{ color: 'var(--orange)' }}>TARGET: 55%+</span>
+              <span>100%</span>
+            </div>
+          </div>
         </div>
+
+        {/* PER SYMBOL */}
+        <div className="card">
+          <div className="card-header"><div className="card-title">📊 Per Symbol</div></div>
+          <div className="card-body">
+            {stats.by_symbol && Object.keys(stats.by_symbol).length > 0 ? (
+              Object.entries(stats.by_symbol).map(([symbol, data]) => (
+                <div key={symbol} style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontWeight: 700 }}>{symbol}</span>
+                    <span className={`tag ${data.win_rate >= 50 ? 'text-green' : 'text-red'}`} style={{ fontSize: 11 }}>{data.win_rate}%</span>
+                  </div>
+                  <div className="progress-bg">
+                    <div className="progress-fill" style={{ width: `${data.win_rate}%`, background: data.win_rate >= 50 ? '#22c55e' : '#f97316' }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'DM Mono, monospace' }}>{data.trades} trades · {data.wins}W · {data.losses}L</div>
+                </div>
+              ))
+            ) : (
+              <div className="empty">No symbol data yet</div>
+            )}
+          </div>
+        </div>
+
       </div>
+
+      {/* ALL TRADES */}
+      <div className="card">
+        <div className="card-header"><div className="card-title">📝 All Trades</div></div>
+        {(!stats.trades || stats.trades.length === 0) ? (
+          <div className="empty">No trades yet — Bot run pannaa data varum! 🚀</div>
+        ) : (
+          stats.trades.map((trade, i) => (
+            <div className="trade-item" key={i}>
+              <div>
+                <div className="trade-symbol">{trade.Symbol}</div>
+                <div className="trade-date">{trade.Date} {trade.Time}</div>
+              </div>
+              <span className={`trade-type ${trade.Signal === 'BUY' ? 'type-buy' : 'type-sell'}`}>{trade.Signal}</span>
+              <span className="trade-score">AI: {trade['AI Score'] || 'N/A'}%</span>
+            </div>
+          ))
+        )}
+      </div>
+
     </div>
   );
 }
 
+// ============================================
+// MAIN DASHBOARD
+// ============================================
 function Dashboard({ username, onLogout }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [botSession, setBotSession] = useState(null);
 
   useEffect(() => {
-    fetch(`${API}/api/status`).then(r => r.json()).then(setBotSession);
-    const interval = setInterval(() => {
-      fetch(`${API}/api/status`).then(r => r.json()).then(setBotSession);
-    }, 30000);
+    const fetchStatus = () => fetch(`${API}/api/status`, { headers: HEADERS }).then(r => r.json()).then(setBotSession).catch(() => {});
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 30000);
     return () => clearInterval(interval);
   }, []);
 
+  const navItems = [
+    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+    { id: 'control', icon: '⚙️', label: 'Control Panel' },
+    { id: 'reports', icon: '📈', label: 'Reports' },
+  ];
+
   return (
-    <div style={styles.app}>
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <span style={{ fontSize: '28px' }}>🤖</span>
-          <div>
-            <div style={styles.headerTitle}>AI Algo Trading</div>
-            <div style={styles.headerSub}>Welcome, {username}! 👑</div>
+    <div className="app">
+      <style>{css}</style>
+
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="logo">
+          <div className="logo-text">⚡ ALGOBOT</div>
+          <div className="logo-sub">AI TRADING SYSTEM</div>
+        </div>
+
+        <div className="nav-section">
+          <div className="nav-label">NAVIGATION</div>
+          {navItems.map(item => (
+            <div key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => setActiveTab(item.id)}>
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="user-card">
+            <div className="user-avatar">{username[0].toUpperCase()}</div>
+            <div>
+              <div className="user-name">{username}</div>
+              <div className="user-role">TRADER</div>
+            </div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={styles.statusBadge('green')}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#34d399' }} />
-            RUNNING
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+
+        {/* TOPBAR */}
+        <div className="topbar">
+          <div className="topbar-title">
+            {navItems.find(n => n.id === activeTab)?.icon} {navItems.find(n => n.id === activeTab)?.label}
           </div>
-          <div style={styles.statusBadge(botSession && botSession.session === 'ACTIVE' ? 'green' : 'red')}>
-            {botSession && botSession.session === 'ACTIVE' ? '🟢 SESSION ACTIVE' : '🔴 SESSION CLOSED'}
+          <div className="topbar-right">
+            <span className="status-pill status-green">
+              <span className="status-dot" /> RUNNING
+            </span>
+            <span className={`status-pill ${botSession?.session === 'ACTIVE' ? 'status-green' : 'status-red'}`}>
+              <span className="status-dot" />
+              {botSession?.session === 'ACTIVE' ? 'SESSION ACTIVE' : 'SESSION CLOSED'}
+            </span>
+            <span className="update-time">{new Date().toLocaleTimeString()}</span>
+            <button className="logout-btn" onClick={onLogout}>LOGOUT</button>
           </div>
-          <div style={styles.timeTxt}>🕐 {new Date().toLocaleTimeString()}</div>
-          <button style={styles.logoutBtn} onClick={onLogout}>🚪 Logout</button>
         </div>
+
+        {/* CONTENT */}
+        {activeTab === 'dashboard' ? <DashboardTab /> : null}
+        {activeTab === 'control' ? <ControlTab /> : null}
+        {activeTab === 'reports' ? <ReportsTab /> : null}
+
       </div>
-      <div style={styles.nav}>
-        {[
-          { id: 'dashboard', label: '📊 Dashboard' },
-          { id: 'control', label: '⚙️ Control Panel' },
-          { id: 'reports', label: '📊 Reports' },
-        ].map(tab => (
-          <button key={tab.id} style={styles.navBtn(activeTab === tab.id)} onClick={() => setActiveTab(tab.id)}>
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      {activeTab === 'dashboard' ? <DashboardTab /> : null}
-      {activeTab === 'control' ? <ControlTab /> : null}
-      {activeTab === 'reports' ? <ReportsTab /> : null}
     </div>
   );
 }
 
+// ============================================
+// APP
+// ============================================
 function App() {
   const [user, setUser] = useState(localStorage.getItem('username'));
   const handleLogin = (username) => setUser(username);
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    setUser(null);
-  };
+  const handleLogout = () => { localStorage.removeItem('token'); localStorage.removeItem('username'); setUser(null); };
   if (!user) return <LoginPage onLogin={handleLogin} />;
   return <Dashboard username={user} onLogout={handleLogout} />;
 }
