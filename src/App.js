@@ -142,12 +142,13 @@ function DashboardTab() {
 
   const fetchAll = async () => {
     try {
-      const [acc, sig, pos, log] = await Promise.all([
-        fetch(`${API}/api/account`).then(r => r.json()),
-        fetch(`${API}/api/signals`).then(r => r.json()),
-        fetch(`${API}/api/positions`).then(r => r.json()),
-        fetch(`${API}/api/tradelog`).then(r => r.json()),
-      ]);
+     const headers = { 'ngrok-skip-browser-warning': 'true' };
+const [acc, sig, pos, log] = await Promise.all([
+  fetch(`${API}/api/account`, { headers }).then(r => r.json()),
+  fetch(`${API}/api/signals`, { headers }).then(r => r.json()),
+  fetch(`${API}/api/positions`, { headers }).then(r => r.json()),
+  fetch(`${API}/api/tradelog`, { headers }).then(r => r.json()),
+]);
       setAccount(acc);
       setSignals(sig);
       setPositions(pos);
