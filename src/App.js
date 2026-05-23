@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
+import { XAxis, YAxis, ResponsiveContainer, Tooltip, AreaChart, Area } from 'recharts';
 
 const API = 'https://hastily-smite-prefix.ngrok-free.dev';
 const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
